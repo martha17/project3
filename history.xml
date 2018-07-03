@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="windows-1252" standalone="no"?>
+<!DOCTYPE log SYSTEM "logger.dtd">
+<log>
+<record>
+  <date>2018-06-30T11:54:51</date>
+  <millis>1530384891316</millis>
+  <sequence>0</sequence>
+  <level>INFO</level>
+  <class>HistoryPanel</class>
+  <method>logAction</method>
+  <thread>17</thread>
+  <message>Added a shape</message>
+</record>
+<record>
+  <date>2018-06-30T11:54:51</date>
+  <millis>1530384891861</millis>
+  <sequence>1</sequence>
+  <level>INFO</level>
+  <class>HistoryPanel</class>
+  <method>logAction</method>
+  <thread>17</thread>
+  <message>Added a shape</message>
+</record>
+</log>
