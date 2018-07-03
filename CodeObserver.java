@@ -2,95 +2,115 @@ import javax.swing.*;
 import java.util.*;
 
 public class CodeObserver implements Observer {
-	private String code = "";
+	private String code;
 	private ShapeIcon shape;
 	private Line line;
+	private Map<ShapeIcon, String[]> classes;
 	
-	public CodeObserver() {}
+	public CodeObserver() {
+		classes = new HashMap<ShapeIcon, String[]>();
+	}
 	
 	public void update(Observable o, Object arg) {
-		String classType = "";
-		String relationship = "";
-		String content = "";
+		generateCode();
+		CodeGeneratorPanel.updateCode(code);
+	}
+	
+	private void generateCode() {
+		code = "";
 		int num = 0;
-		if (o instanceof ShapeIcon) {
-			shape = (ShapeIcon) o;
-			num = DrawPanelTwo.getShapes().indexOf(shape) + 1;
-			ShapeType type = shape.getShapeType();
-			switch (type) {
-				case CIRCLE:
-					classType = "interface"; break;
-				case SQUARE:
-					classType = "class"; break;
-				case STAR:
-				case TRIANGLE:
-					return ;
-			}
-			String newLine = String.format("public %s Icon%d %s{\n%s\n}\n", classType, num, relationship, content);
+		ArrayList<ShapeIcon> shapes = DrawPanelTwo.getShapes();
 		
-			if (arg.equals("add")) {
-				code += newLine;
-			} else if (arg.equals("remove")) {
-				code = code.replace(newLine, "");
-			}
+		ShapeIcon[] shapeArr = new ShapeIcon[shapes.size()];
+		String[] classTypes = calculateClassTypes(shapes.toArray(shapeArr));
+		
+		for (int i = 0; i < shapeArr.length; i++) {
+			String[] relationships = calculateRelationship(shapeArr[i]);
+			String relationship = relationships[0];
+			String content = relationships[1];
 			
-		} else if (o instanceof Line) {
-			line = (Line) o;
-			ShapeIcon head = line.getHead();
-			ShapeIcon tail = line.getTail();
-			ShapeType[] shapeTypes = {head.getShapeType(), tail.getShapeType()};
-			int[] shapeNums = {DrawPanelTwo.getShapes().indexOf(head) + 1, DrawPanelTwo.getShapes().indexOf(tail) + 1};
-			LineType type = line.getLineType();
-			String newLine;
-			
-			String[] codeStrings = new String[2];
-			for (int i = 0; i < shapeTypes.length; i++) {
-				switch (shapeTypes[i]) {
-					case CIRCLE:
-						classType = "interface"; break;
-					case SQUARE:
-						classType = "class"; break;
-					case STAR:
-					case TRIANGLE:
-						return ;
-				}
-				codeStrings[i] = String.format("public %s Icon%d %s{\n%s\n}\n", classType, shapeNums[i], relationship, content);
-			}
-			
-			// Intentionally bleed through cases to display error message if shapes are not in the correct orientation
-			switch (type) {
-				case AGGREGATION:
-					if (shapeTypes[1] != ShapeType.CIRCLE && shapeTypes[0] != ShapeType.CIRCLE) {
-						content = String.format("\tprivate Icon%d icon%d;", shapeNums[1], shapeNums[1]);
-						newLine = String.format("public %s Icon%d %s {\n%s\n}\n", classType, shapeNums[0], relationship, content);
-						code = code.replace(codeStrings[0], newLine);
-						break;
-					}
-				case ASSOCIATION:
-					if (shapeTypes[1] != ShapeType.CIRCLE && shapeTypes[0] != ShapeType.CIRCLE) {
-						String subcontent = String.format("\t Icon%d icon%d;", shapeNums[1], shapeNums[1]);
-						content = String.format("\t public Icon%d() {\n\t\t %s \n\t }", shapeNums[0], subcontent);
-						newLine = String.format("public %s Icon%d %s {\n%s\n}\n", classType, shapeNums[1], relationship, content);
-						code = code.replace(codeStrings[0], newLine);
-						break;
-					}
-				case INHERITANCE:
-					if (shapeTypes[1] == ShapeType.SQUARE && shapeTypes[0] == ShapeType.SQUARE) {
-						relationship = String.format("extends Icon%d", shapeNums[1]);
-						newLine = String.format("public %s Icon%d %s {\n%s\n}\n", classType, shapeNums[0], relationship, content);
-						code = code.replace(codeStrings[0], newLine);
-						break;
-					} else if (shapeTypes[1] == ShapeType.CIRCLE && shapeTypes[0] == ShapeType.SQUARE) {
-						relationship = String.format("implements Icon%d", shapeNums[1]);
-						newLine = String.format("public %s Icon%d %s {\n%s\n}\n", classType, shapeNums[0], relationship, content);
-						code = code.replace(codeStrings[0], newLine);
-						break;
-					}
-				default:
-					JOptionPane.showMessageDialog(DrawPanelTwo.getBG().getBG(), "Invalid relationship between shapes ... Please try again.", "Invalid Shape Relationship", JOptionPane.ERROR_MESSAGE);
+			num = DrawPanelTwo.getShapes().indexOf(shapeArr[i]) + 1;
+				
+			code += String.format("public %s Icon%d %s{\n%s\n}\n", classTypes[i], num, relationship, content);
+		}
+	}
+	
+	private String[] calculateClassTypes(ShapeIcon[] shapes) {
+		String[] types = new String[shapes.length];
+		for (int i = 0; i < shapes.length; i++) {
+			switch(shapes[i].getShapeType()) {
+				case CIRCLE:
+					types[i] = "interface"; break;
+				case SQUARE:
+					types[i] = "class"; break;
+				case TRIANGLE:
+				case STAR:
+					break;
 			}
 		}
 		
-		CodeGeneratorPanel.updateCode(code);
+		return types;
 	}
+	
+	private String[] calculateRelationship(ShapeIcon shape) {
+		int shapeNum = DrawPanelTwo.getShapes().indexOf(shape) + 1;
+		String relationship = "";
+		String content = "";
+		String aggregationContent = "";
+		String associationContent = "";
+		String inheritRelationship = "";
+		String realizeRelationship = "";
+		String associationSubcontent = "";
+		ArrayList<String> realizationIcons = new ArrayList<String>();
+		ArrayList<Line> lines = DrawPanelTwo.getLines();
+
+		// Gather all relationships on a shape
+		for (Line line : lines) {
+			LineType type = line.getLineType();
+			ShapeIcon[] lineShapes = {line.getHead(), line.getTail()};
+			String[] shapeTypes = calculateClassTypes(lineShapes);
+			int[] shapeNums = {DrawPanelTwo.getShapes().indexOf(lineShapes[0]) + 1, DrawPanelTwo.getShapes().indexOf(lineShapes[1]) + 1};
+			
+			if (!RelationshipUtilities.validConnection(line) || lineShapes[0] != shape) {
+				continue;
+			}
+			
+			if (type == LineType.AGGREGATION) {
+				aggregationContent += String.format("\tprivate Icon%d icon%d;\n", shapeNums[1], shapeNums[1]);
+			} else if (type == LineType.ASSOCIATION) {
+				associationSubcontent += String.format("\t\tIcon%d icon%d;\n", shapeNums[1], shapeNums[1]);
+			} else if (type == LineType.INHERITANCE) {
+				if (shapeTypes[1].equals("class") && shapeTypes[0].equals("class")) {
+					inheritRelationship = String.format("extends Icon%d", shapeNums[1]);
+				} else if (shapeTypes[1].equals("interface") && shapeTypes[0].equals("class")) {
+					realizationIcons.add(String.format("Icon%d", shapeNums[1]));
+				}
+			}
+		}
+
+		// Generate correct realization code
+		for (String icon : realizationIcons) {
+			if (icon.equals(realizationIcons.get(0)) && realizationIcons.size() == 1) {
+				realizeRelationship += String.format("implements %s", icon);
+			} else if (icon.equals(realizationIcons.get(0))) {
+				realizeRelationship += String.format("implements %s, ", icon);
+			} else if (icon.equals(realizationIcons.get(realizationIcons.size() - 1))) {
+				realizeRelationship += icon;
+			} else {
+				realizeRelationship += String.format("%s, ", icon);
+			}
+		}
+		
+		// Set association content if there is an association relationship
+		if (!associationSubcontent.equals("")) {
+			associationContent = String.format("\t public Icon%d() {\n %s\n\t }", shapeNum, associationSubcontent);
+		}
+		
+		// Format relationships for the class
+		content = String.format("%s %s", aggregationContent, associationContent);
+		relationship = String.format("%s %s", inheritRelationship, realizeRelationship); 
+		
+		return new String[] {relationship, content};
+	}
+	
 }
