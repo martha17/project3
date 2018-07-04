@@ -214,28 +214,32 @@ public class ShapeIcon extends Observable implements Serializable {
 		return iconList;*/
                 
                 String fileName = "star.png";
+                String shapeName = "STAR";
 		String fileType = fileName.substring(fileName.lastIndexOf('.') + 1);
 		if (fileType.equals("png")) {
 			ShapeIcon icon = new ShapeIcon("src/" + fileName);
-			iconList.put(icon, fileName);
+			iconList.put(icon, shapeName);
 		}
                 fileName = "circle.png";
+                shapeName = "CIRCLE";
 		fileType = fileName.substring(fileName.lastIndexOf('.') + 1);
 		if (fileType.equals("png")) {
 			ShapeIcon icon = new ShapeIcon("src/" + fileName);
-			iconList.put(icon,fileName);
+			iconList.put(icon,shapeName);
 		}
                 fileName = "triangle.png";
+                shapeName = "TRIANGLE";
 		fileType = fileName.substring(fileName.lastIndexOf('.') + 1);
 		if (fileType.equals("png")) {
 			ShapeIcon icon = new ShapeIcon("src/" + fileName);
-			iconList.put(icon,fileName);
+			iconList.put(icon,shapeName);
 		}
                 fileName = "square.png";
+                shapeName = "SQUARE";
 		fileType = fileName.substring(fileName.lastIndexOf('.') + 1);
 		if (fileType.equals("png")) {
 			ShapeIcon icon = new ShapeIcon("src/" + fileName);
-			iconList.put(icon,fileName);
+			iconList.put(icon,shapeName);
 		}
 		return iconList;
 	}
